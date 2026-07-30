@@ -208,8 +208,8 @@ CREATE TABLE IF NOT EXISTS role_permissions (
 INSERT IGNORE INTO role_permissions (role, permission, is_allowed) VALUES
 ('user', 'pdf_tools', 1),
 ('user', 'image_tools', 1),
-('user', 'image_remove_bg', 0),
-('user', 'image_ai_upscale', 0),
+('user', 'image_remove_bg', 1),
+('user', 'image_ai_upscale', 1),
 ('user', 'blog_editor', 0),
 ('user', 'system_config', 0),
 

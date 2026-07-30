@@ -106,6 +106,11 @@ async function runMigration() {
     await addColumnIfMissing('blogs', 'reading_time', 'INT DEFAULT 0');
     await addColumnIfMissing('blogs', 'published_at', 'TIMESTAMP NULL DEFAULT NULL');
 
+    console.log('Ensuring user permissions for AI tools are enabled for testing...');
+    await db.query(
+      "UPDATE role_permissions SET is_allowed = 1 WHERE role = 'user' AND permission IN ('image_remove_bg', 'image_ai_upscale')"
+    );
+
     console.log('Database Schema Migration completed successfully.');
 
     // Seeding phase
