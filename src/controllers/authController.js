@@ -11,7 +11,7 @@ const hashToken = (token) => {
 // Helper to sign JWT Access Token
 const generateAccessToken = (user) => {
   return jwt.sign(
-    { id: user.id, email: user.email, role: user.role },
+    { id: user.id, email: user.email, role: user.role, fullName: user.fullName || user.full_name },
     process.env.JWT_SECRET || 'super_secret_jwt_sign_key_change_in_production',
     { expiresIn: '15m' }
   );
@@ -159,7 +159,8 @@ exports.refresh = async (req, res, next) => {
     const user = {
       id: session.user_id,
       email: session.email,
-      role: session.role
+      role: session.role,
+      fullName: session.full_name
     };
 
     // Generate New Tokens (Rotation)
@@ -329,3 +330,47 @@ exports.verifyEmail = async (req, res, next) => {
     next(error);
   }
 };
+
+// Update Profile Handler
+exports.updateProfile = async (req, res, next) => {
+  try {
+    const userId = req.user.id;
+    const { fullName, password } = req.body;
+
+    if (password) {
+      const salt = await bcrypt.genSalt(12);
+      const passwordHash = await bcrypt.hash(password, salt);
+      await db.query(
+        'UPDATE users SET full_name = ?, password_hash = ? WHERE id = ?',
+        [fullName, passwordHash, userId]
+      );
+    } else {
+      await db.query(
+        'UPDATE users SET full_name = ? WHERE id = ?',
+        [fullName, userId]
+      );
+    }
+
+    // Fetch updated user to generate new token
+    const [users] = await db.query('SELECT id, email, full_name, role, is_verified FROM users WHERE id = ?', [userId]);
+    const user = users[0];
+
+    const accessToken = generateAccessToken(user);
+
+    res.status(200).json({
+      status: 'success',
+      message: 'Profile updated successfully.',
+      accessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.full_name,
+        role: user.role,
+        isVerified: !!user.is_verified
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

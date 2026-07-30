@@ -78,6 +78,8 @@ router.post(
   authController.resetPassword
 );
 
+const authMiddleware = require('../middleware/auth');
+
 // GET /verify-email/:token
 router.get(
   '/verify-email/:token',
@@ -86,6 +88,23 @@ router.get(
   ],
   handleValidationErrors,
   authController.verifyEmail
+);
+
+// POST /update-profile
+router.post(
+  '/update-profile',
+  authMiddleware,
+  [
+    body('fullName')
+      .trim()
+      .notEmpty().withMessage('Full name is required.')
+      .isLength({ max: 100 }).withMessage('Full name cannot exceed 100 characters.'),
+    body('password')
+      .optional({ checkFalsy: true })
+      .isLength({ min: 6 }).withMessage('Password must be at least 6 characters long.')
+  ],
+  handleValidationErrors,
+  authController.updateProfile
 );
 
 module.exports = router;
