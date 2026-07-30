@@ -10,7 +10,30 @@ const router = express.Router();
 router.get('/', blogController.getPublicBlogs);
 router.get('/categories', blogController.getCategories);
 router.get('/tags', blogController.getTags);
+
+// CRON endpoint to publish scheduled blogs
+router.get('/cron/publish-scheduled', async (req, res, next) => {
+  // Verify CRON_SECRET if configured to prevent unauthorized requests
+  if (process.env.CRON_SECRET && req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
+    return res.status(401).json({ status: 'error', message: 'Unauthorized' });
+  }
+  
+  const db = require('../config/db');
+  try {
+    const [result] = await db.query(
+      "UPDATE blogs SET status = 'published' WHERE status = 'scheduled' AND published_at <= NOW()"
+    );
+    res.status(200).json({
+      status: 'success',
+      message: `Automatically published ${result.affectedRows} scheduled post(s).`
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.get('/:slug', blogController.getPublicBlogBySlug);
+
 
 // --- Admin CMS Routes (Protected by Auth & Admin Role Check) ---
 const adminGuards = [authMiddleware, roleMiddleware('admin')];
