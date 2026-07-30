@@ -16,7 +16,7 @@ app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev')); // 
 
 // CORS configuration
 const allowedOrigins = [
-  process.env.FRONTEND_URL || 'http://localhost:5173',
+  (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, ''),
   'http://localhost:5174',
   'http://localhost:5175'
 ];
